@@ -1,0 +1,24 @@
+.shell {
+  min-height: 100dvh;
+}
+
+/* Default: mobile top nav */
+.main {
+  padding-top: 56px; /* height of top navbar */
+  min-height: 100dvh;
+}
+
+/* Desktop: left sidebar */
+@media (min-width: 775px) {
+  .main {
+    padding-top: 0;
+    padding-left: 96px; /* icon-only sidebar width */
+  }
+}
+
+/* Wide desktop: sidebar expands to show labels */
+@media (min-width: 1200px) {
+  .main {
+    padding-left: 240px; /* expanded sidebar width */
+  }
+}
