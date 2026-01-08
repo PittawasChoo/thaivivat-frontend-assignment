@@ -8,12 +8,13 @@ type Options = {
   threshold?: number;
 };
 
+const THRESHOLD = 0;
+
 export function useInfiniteObserver({
   enabled,
   onIntersect,
   root = null,
-  rootMargin = "600px", // prefetch-ish: starts earlier
-  threshold = 0,
+  rootMargin = "600px",
 }: Options) {
   const ref = useRef<HTMLDivElement | null>(null);
 
@@ -27,12 +28,12 @@ export function useInfiniteObserver({
         const first = entries[0];
         if (first?.isIntersecting) onIntersect();
       },
-      { root, rootMargin, threshold }
+      { root, rootMargin, threshold: THRESHOLD }
     );
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, [enabled, onIntersect, root, rootMargin, threshold]);
+  }, [enabled, onIntersect, root, rootMargin]);
 
   return ref;
 }

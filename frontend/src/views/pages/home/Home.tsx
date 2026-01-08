@@ -23,30 +23,6 @@ export default function Home() {
     <div>
       <h2 style={{ marginBottom: 12 }}>Home</h2>
 
-      {/* {posts.map((p) => (
-        <article
-          key={p.id}
-          style={{
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 12,
-            padding: 12,
-            marginBottom: 12,
-          }}
-        >
-          <div style={{ fontWeight: 700, marginBottom: 6 }}>{p.username}</div>
-          <img
-            src={p.imageUrl}
-            alt={p.caption}
-            style={{ width: "100%", borderRadius: 10, display: "block" }}
-            loading="lazy"
-          />
-          <div style={{ marginTop: 8 }}>{p.caption}</div>
-          <div style={{ opacity: 0.7, fontSize: 12, marginTop: 6 }}>
-            ❤️ {p.likesCount} • {new Date(p.createdAt).toLocaleString()}
-          </div>
-        </article>
-      ))} */}
-
       <main
         style={{
           maxWidth: 500,
@@ -67,16 +43,21 @@ export default function Home() {
           />
         ))}
 
-        {/* Sentinel at bottom */}
-        <div style={{ height: 16 }} />
-        <div ref={sentinelRef} style={{ height: 1 }} />
-
         <FeedStatus
           loading={isLoading}
           error={error}
-          hasMore={!hasMore && !isLoading}
+          hasMore={hasMore}
           hasAnyPosts={posts.length > 0}
         />
+
+        {/* Sentinel at bottom */}
+        {hasMore && (
+          <>
+            <div style={{ height: "50px" }} />
+          </>
+        )}
+
+        <div ref={sentinelRef} style={{ height: 1 }} />
       </main>
     </div>
   );
