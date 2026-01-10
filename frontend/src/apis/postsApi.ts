@@ -1,6 +1,8 @@
-import type { PostsResponse } from "../types/post";
+import type { PostsResponse } from "types/post";
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const baseURL = new URL("http://localhost:4000"); // This should be stored in an environment variable in production
 
 export async function fetchPosts(params: {
     page: number;
@@ -10,7 +12,7 @@ export async function fetchPosts(params: {
 }): Promise<PostsResponse> {
     const { page, limit, q = "", signal } = params;
 
-    const url = new URL("http://localhost:4000/api/posts"); // This should be stored in an environment variable in production
+    const url = new URL(baseURL + "api/posts");
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(limit));
     if (q) url.searchParams.set("q", q);
@@ -23,4 +25,24 @@ export async function fetchPosts(params: {
     }
 
     return (await res.json()) as PostsResponse;
+}
+
+export async function likePost(postId: string | number, signal?: AbortSignal) {
+    const res = await fetch(`/api/posts/${postId}/like`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal,
+    });
+    if (!res.ok) throw new Error("Like failed");
+    return res.json() as Promise<{ postId: number; liked: boolean; likesCount: number }>;
+}
+
+export async function unlikePost(postId: string | number, signal?: AbortSignal) {
+    const res = await fetch(`/api/posts/${postId}/unlike`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        signal,
+    });
+    if (!res.ok) throw new Error("Unlike failed");
+    return res.json() as Promise<{ postId: number; liked: boolean; likesCount: number }>;
 }

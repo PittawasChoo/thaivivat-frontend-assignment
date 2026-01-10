@@ -64,19 +64,55 @@ app.get("/api/posts", async (req, res) => {
     });
 });
 
-// app.patch("/api/posts/:id/like", async (req, res) => {
-//   await db.read();
+app.patch("/api/posts/:id/like", async (req, res) => {
+    await db.read();
 
-//   const id = Number(req.params.id);
-//   const post = db.data.posts.find((p) => p.id === id);
+    const id = Number(req.params.id);
+    const post = db.data.posts.find((p) => p.id === id);
 
-//   if (!post) return res.status(404).json({ message: "Not found" });
+    if (!post) return res.status(404).json({ message: "Not found" });
 
-//   post.likesCount = (post.likesCount ?? 0) + 1;
-//   await db.write();
+    if (post.liked) {
+        return res.json({
+            postId: post.id,
+            likesCount: post.likesCount,
+            liked: post.liked,
+        });
+    }
 
-//   res.json(post);
-// });
+    post.likesCount = (post.likesCount ?? 0) + 1;
+    post.liked = true;
+    await db.write();
+
+    res.json({
+        postId: post.id,
+        likesCount: post.likesCount,
+        liked: post.liked,
+    });
+});
+
+app.patch("/api/posts/:id/unlike", async (req, res) => {
+    await db.read();
+
+    const id = Number(req.params.id);
+    const post = db.data.posts.find((p) => p.id === id);
+
+    if (!post) return res.status(404).json({ message: "Not found" });
+
+    if (!post.liked) {
+        return res.status(200).json({ message: "Post is not liked" });
+    }
+
+    post.likesCount = (post.likesCount ?? 0) - 1;
+    post.liked = false;
+    await db.write();
+
+    res.json({
+        postId: post.id,
+        likesCount: post.likesCount,
+        liked: post.liked,
+    });
+});
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));

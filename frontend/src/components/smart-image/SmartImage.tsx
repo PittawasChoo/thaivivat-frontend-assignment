@@ -8,7 +8,7 @@ type Props = {
     onDoubleClick?: () => void;
 };
 
-const CLICK_DELAY = 200;
+const CLICK_DELAY = 350;
 
 export default function SmartImage({ src, alt = "", style, onClick, onDoubleClick }: Props) {
     const retried = useRef(false);

@@ -1,38 +1,38 @@
-export type PostsResponse = {
-    data: PostWithRelations[];
-    page: number;
-    limit: number;
-    total: number;
-    hasMore: boolean;
-};
-
-export type User = {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl: string;
-    isVerified: boolean;
-    hasStory: boolean;
-};
-
 export type Location = {
     id: number;
     name: string;
 };
 
 export type Post = {
-    id: number;
-    userId: number;
-    locationId: number | null;
-    imageUrls: string[];
-    createdAt: string;
     allTags: string[][];
-    likesCount: number;
     caption: string;
+    createdAt: string;
+    id: number;
+    imageUrls: string[];
     liked: boolean;
+    likesCount: number;
+    locationId: number | null;
+    userId: number;
+};
+
+export type PostsResponse = {
+    data: PostWithRelations[];
+    hasMore: boolean;
+    limit: number;
+    page: number;
+    total: number;
 };
 
 export type PostWithRelations = Post & {
-    user: User;
     location: Location | null;
+    user: User;
+};
+
+export type User = {
+    avatarUrl: string;
+    hasStory: boolean;
+    id: number;
+    isVerified: boolean;
+    name: string;
+    username: string;
 };

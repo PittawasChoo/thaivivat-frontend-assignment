@@ -1,12 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
+import Heart from "assets/icons/heart-outline.png";
+import LeftArrow from "assets/icons/left-arrow.png";
+import RedHeart from "assets/icons/heart-red.png";
+import RightArrow from "assets/icons/right-arrow.png";
+import User from "assets/icons/user.png";
+import Verified from "assets/icons/verified.png";
+
+import type { PostWithRelations } from "types/post";
+
+import { formatPostTime } from "utils/time";
+import { formatToShortNumber } from "utils/number";
+
 import SmartImage from "../smart-image/SmartImage";
-import type { PostWithRelations } from "../../types/post";
-import RightArrow from "../../assets/icons/right-arrow.png";
-import LeftArrow from "../../assets/icons/left-arrow.png";
-import Verified from "../../assets/icons/verified.png";
-import Heart from "../../assets/icons/heart-outline.png";
-import RedHeart from "../../assets/icons/heart-red.png";
-import User from "../../assets/icons/user.png";
 
 /* image size cache */
 const sizeCache = new Map<string, { w: number; h: number }>();
@@ -24,28 +31,27 @@ const loadImageSize = (src: string) =>
         img.src = src;
     });
 
-export default function PostBox(props: { post: PostWithRelations }) {
-    const { post } = props;
+export default function PostBox(props: {
+    post: PostWithRelations;
+    onToggleLike: (postId: number) => void;
+}) {
+    const { post, onToggleLike } = props;
     const urls = post.imageUrls ?? [];
-
-    const defaultTagsState = useMemo(() => urls.map(() => false), [urls.length]);
-    const [showingTags, setShowingTags] = useState(defaultTagsState);
-
-    useEffect(() => {
-        // reset when post changes (or number of images changes)
-        setShowingTags(defaultTagsState);
-    }, [post.id, defaultTagsState]);
-
-    const resetTags = () => setShowingTags(defaultTagsState);
-
-    const toggleShowTags = (imageIndex: number) => {
-        setShowingTags((prev) => prev.map((isOpen, i) => (i === imageIndex ? !isOpen : false)));
-    };
 
     const hasMultiple = urls.length > 1;
 
     const [activeImage, setActiveImage] = useState(0);
     useEffect(() => setActiveImage(0), [post.id]);
+
+    const [openTagsIndex, setOpenTagsIndex] = useState<number | null>(null);
+
+    useEffect(() => setOpenTagsIndex(null), [post.id, activeImage]);
+
+    const resetTags = () => setOpenTagsIndex(null);
+
+    const toggleShowTags = (imageIndex: number) => {
+        setOpenTagsIndex((prev) => (prev === imageIndex ? null : imageIndex));
+    };
 
     /** container width */
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +77,20 @@ export default function PostBox(props: { post: PostWithRelations }) {
         return sizes.map((s) => s.h > s.w);
     }, [sizes]);
 
+    const [likePulse, setLikePulse] = useState(false);
+    const prevLikedRef = useRef(post.liked);
+
+    useEffect(() => {
+        const prev = prevLikedRef.current;
+        prevLikedRef.current = post.liked;
+
+        if (!prev && post.liked) {
+            setLikePulse(true);
+            const t = window.setTimeout(() => setLikePulse(false), 3000);
+            return () => window.clearTimeout(t);
+        }
+    }, [post.liked]);
+
     return (
         <div style={styles.card}>
             <div
@@ -78,33 +98,47 @@ export default function PostBox(props: { post: PostWithRelations }) {
                     width: "100%",
                     display: "flex",
                     alignItems: "center",
-                    padding: 10,
+                    padding: "0 12px 12px 12px",
                     gap: 12,
                 }}
             >
                 <div
                     style={{
                         ...styles.profileImgContainer,
-                        ...(post.user?.hasStory ? styles.hasStory : {}),
+                        ...(post.user.hasStory ? styles.hasStory : {}),
                     }}
                 >
                     <img
                         style={styles.profileImg}
-                        src={post.user?.avatarUrl}
+                        src={post.user.avatarUrl}
                         alt=""
                         aria-hidden="true"
                     />
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "start" }}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                        <span style={styles.user}>{post.user?.username}</span>
-                        {post.user?.isVerified && (
+                    <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                        <span style={styles.user}>{post.user.username}</span>
+                        {post.user.isVerified && (
                             <img
                                 style={styles.verified}
                                 src={Verified}
                                 alt="Verified Account"
                                 aria-hidden="true"
                             />
+                        )}
+                        {post.createdAt && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    gap: 5,
+                                    alignItems: "center",
+                                    fontSize: 16,
+                                    color: "#a8a8a8",
+                                }}
+                            >
+                                <span>•</span>
+                                <span>{formatPostTime(post.createdAt)}</span>
+                            </div>
                         )}
                     </div>
                     {post.location?.name && (
@@ -129,8 +163,46 @@ export default function PostBox(props: { post: PostWithRelations }) {
                         return (
                             <div
                                 key={src}
-                                style={{ flex: "0 0 100%", height: "100%", position: "relative" }}
+                                style={{
+                                    flex: "0 0 100%",
+                                    height: "100%",
+                                    position: "relative",
+                                }}
                             >
+                                <AnimatePresence mode="wait">
+                                    {likePulse && i === activeImage && (
+                                        <motion.div
+                                            key={`heart-${post.id}-${activeImage}`}
+                                            initial={{ opacity: 0, scale: 0.85 }}
+                                            animate={{ opacity: 1, scale: 1.1 }}
+                                            exit={{ opacity: 0, scale: 0.95 }}
+                                            transition={{ duration: 0.35, ease: "easeOut" }}
+                                            style={{
+                                                position: "absolute",
+                                                inset: 0,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                pointerEvents: "none",
+                                                zIndex: 10,
+                                                filter: "drop-shadow(0 10px 25px rgba(0,0,0,0.45))",
+                                            }}
+                                        >
+                                            <motion.img
+                                                src={RedHeart}
+                                                alt=""
+                                                aria-hidden="true"
+                                                style={{ width: 200, height: 200 }}
+                                                animate={{
+                                                    scale: [1, 1.05, 1],
+                                                    opacity: [1, 1, 0],
+                                                }}
+                                                transition={{ duration: 1.0, times: [0, 0.3, 1] }}
+                                            />
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
                                 <SmartImage
                                     src={src}
                                     alt={post.caption}
@@ -140,7 +212,7 @@ export default function PostBox(props: { post: PostWithRelations }) {
                                         objectPosition: isPortrait ? "center" : "center",
                                     }}
                                     onClick={() => toggleShowTags(i)}
-                                    onDoubleClick={() => console.log("double click:", post.id, i)}
+                                    onDoubleClick={() => onToggleLike(post.id)}
                                 />
 
                                 {tags.length > 0 && (
@@ -168,38 +240,56 @@ export default function PostBox(props: { post: PostWithRelations }) {
                                         />
                                     </div>
                                 )}
-
-                                {showingTags[i] && (
-                                    <div
-                                        style={{
-                                            position: "absolute",
-                                            top: "50%",
-                                            left: "50%",
-                                            transform: "translate(-50%, -50%)",
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "center",
-                                            gap: 10,
-                                        }}
-                                    >
-                                        {tags.map((tag) => (
-                                            <div
+                                <AnimatePresence mode="wait">
+                                    {openTagsIndex === i && tags.length > 0 && (
+                                        <div
+                                            style={{
+                                                position: "absolute",
+                                                top: "50%",
+                                                left: "50%",
+                                                transform: "translate(-50%, -50%)",
+                                                zIndex: 6,
+                                            }}
+                                            onClick={resetTags}
+                                        >
+                                            <motion.div
+                                                key={`tags-${post.id}-${i}`}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                transition={{ duration: 0.2 }}
                                                 style={{
-                                                    padding: "6px 15px",
-                                                    borderRadius: 16,
-                                                    background: "rgba(43, 48, 54, 0.6)",
-                                                    color: "#fff",
-                                                    fontSize: 14,
-                                                    fontWeight: 800,
-                                                    pointerEvents: "none",
-                                                    whiteSpace: "nowrap",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    alignItems: "center",
+                                                    gap: 10,
                                                 }}
                                             >
-                                                {tag}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                                {tags.map((tag) => (
+                                                    <motion.div
+                                                        key={tag}
+                                                        initial={{ y: 6, opacity: 0 }}
+                                                        animate={{ y: 0, opacity: 1 }}
+                                                        exit={{ y: 6, opacity: 0 }}
+                                                        transition={{ duration: 0.2 }}
+                                                        style={{
+                                                            padding: "6px 15px",
+                                                            borderRadius: 16,
+                                                            background: "rgba(43, 48, 54, 0.6)",
+                                                            color: "#fff",
+                                                            fontSize: 14,
+                                                            fontWeight: 800,
+                                                            pointerEvents: "none",
+                                                            whiteSpace: "nowrap",
+                                                        }}
+                                                    >
+                                                        {tag}
+                                                    </motion.div>
+                                                ))}
+                                            </motion.div>
+                                        </div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         );
                     })}
@@ -258,18 +348,29 @@ export default function PostBox(props: { post: PostWithRelations }) {
             </div>
 
             <div style={styles.actions}>
-                <div onClick={() => console.log("Like clicked:", post.id)}>
+                <div onClick={() => onToggleLike(post.id)}>
                     <img
-                        style={{ width: 24, height: 24 }}
+                        style={{ width: 24, height: 24, cursor: "pointer" }}
                         src={post.liked ? RedHeart : Heart}
                         alt=""
                         aria-hidden="true"
                     />
                 </div>
-                <span>{post.likesCount} likes</span>
+                <span>{formatToShortNumber(post.likesCount)} likes</span>
             </div>
 
-            <div style={styles.caption}>{post.caption}</div>
+            <div style={styles.captionContainer}>
+                <div style={styles.user}>{post.user.username}</div>
+                {post.user.isVerified && (
+                    <img
+                        style={styles.verified}
+                        src={Verified}
+                        alt="Verified Account"
+                        aria-hidden="true"
+                    />
+                )}
+                <div>{post.caption}</div>
+            </div>
         </div>
     );
 }
@@ -300,8 +401,8 @@ const styles: Record<string, React.CSSProperties> = {
     },
     user: { fontSize: 16, fontWeight: 800 },
     verified: {
-        width: 18,
-        height: 18,
+        width: 16,
+        height: 16,
     },
 
     imageContainer: {
@@ -360,6 +461,19 @@ const styles: Record<string, React.CSSProperties> = {
         padding: 0,
     },
 
-    actions: { padding: 10, display: "flex", gap: 10 },
-    caption: { padding: "0 10px 10px" },
+    actions: {
+        padding: "0px 12px",
+        display: "flex",
+        gap: 10,
+        margin: "16px 0 0 0",
+        fontSize: 16,
+        fontWeight: 800,
+    },
+    captionContainer: {
+        padding: "0px 12px",
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 16,
+    },
 };

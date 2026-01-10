@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { fetchPosts } from "../apis/postsApi";
 
-import type { PostWithRelations } from "../types/post";
+import { fetchPosts } from "apis/postsApi";
+
+import type { PostWithRelations } from "types/post";
 
 type UseInfinitePostsArgs = {
     limit?: number;
@@ -80,5 +81,5 @@ export function useInfinitePosts({ limit = 10, q = "" }: UseInfinitePostsArgs) {
         return () => abortRef.current?.abort();
     }, [reset]);
 
-    return { posts, isLoading, error, hasMore, loadMore, reset, page };
+    return { posts, isLoading, error, hasMore, loadMore, reset, page, setPosts };
 }

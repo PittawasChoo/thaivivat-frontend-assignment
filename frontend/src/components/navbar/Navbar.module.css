@@ -21,7 +21,7 @@
     top: 0;
     left: 0;
     bottom: 0;
-    width: 72px;
+    width: 48px;
     padding: 16px 12px;
     flex-direction: column;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -39,11 +39,12 @@
     align-items: center;
     gap: 10px;
     height: 40px;
+    margin: 10px 0 32px 12px;
 }
 
 .brandIcon {
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
 }
 
 .brandText {
@@ -69,11 +70,12 @@
 }
 
 .item {
+    width: 100%;
     display: inline-flex;
     align-items: center;
     gap: 12px;
     height: 44px;
-    padding: 0 12px;
+    /* padding: 0 12px; */
     border-radius: 12px;
     color: rgba(255, 255, 255, 0.9);
     text-decoration: none;
@@ -84,16 +86,17 @@
 }
 
 .icon {
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
+    margin-left: 12px;
 }
 
 .label {
-    font-size: 15px;
+    font-size: 18px;
 }
 
 .active {
-    background: rgba(255, 255, 255, 0.08);
+    font-weight: 700;
 }
 
 .item:hover {
