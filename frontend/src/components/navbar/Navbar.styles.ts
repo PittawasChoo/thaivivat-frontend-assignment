@@ -59,6 +59,13 @@ export const BrandIcon = styled.img`
 export const BrandText = styled.span`
     font-size: 18px;
     font-weight: 700;
+    text-decoration: none;
+    color: white;
+
+    &:hover {
+        text-decoration: none;
+        color: white;
+    }
 `;
 
 export const Items = styled.div<{ $variant: "top" | "left" }>`

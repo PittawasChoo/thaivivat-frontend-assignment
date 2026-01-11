@@ -9,10 +9,11 @@ const router = createBrowserRouter([
     {
         path: "/",
         element: <Layout />,
-        errorElement: <PageNotFound />,
         children: [
             { index: true, element: <Home /> },
             { path: "profile/:username", element: <Profile /> },
+
+            { path: "*", element: <PageNotFound /> },
         ],
     },
 ]);
