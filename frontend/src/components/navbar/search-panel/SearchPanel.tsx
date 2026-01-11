@@ -1,6 +1,6 @@
 // src/components/navbar/search-panel/SearchPanel.tsx
 import { useEffect, useRef, useState } from "react";
-
+import { useQuery } from "@tanstack/react-query";
 import { searchAccounts } from "apis/searchApi";
 import Verified from "assets/icons/verified.png";
 import ProfileImage from "components/profile-image/ProfileImage";
@@ -47,15 +47,21 @@ const SearchPanel = ({ isWide, open, onClose }: SearchPanelProps) => {
     const [q, setQ] = useState("");
     const debounced = useDebounce(q.trim(), 600);
 
-    const [loading, setLoading] = useState(false);
-    const [users, setUsers] = useState<User[]>([]);
-    const [err, setErr] = useState<string | null>(null);
+    const searchQuery = useQuery({
+        queryKey: ["searchAccounts", debounced],
+        enabled: open && !!debounced,
+        queryFn: ({ signal }) => searchAccounts(debounced, signal),
+        staleTime: 30_000,
+    });
+
+    const loading = searchQuery.isFetching;
+    const err = searchQuery.isError ? "Search failed" : null;
+    const users = searchQuery.data ?? [];
 
     const [recents, setRecents] = useState<User[]>(() => loadRecents());
 
     const panelRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
-    const abortRef = useRef<AbortController | null>(null);
 
     // focus input when opened
     useEffect(() => {
@@ -65,10 +71,6 @@ const SearchPanel = ({ isWide, open, onClose }: SearchPanelProps) => {
         }
 
         setQ("");
-        setUsers([]);
-        setErr(null);
-        setLoading(false);
-        abortRef.current?.abort();
     }, [open]);
 
     // close on outside click
@@ -93,37 +95,6 @@ const SearchPanel = ({ isWide, open, onClose }: SearchPanelProps) => {
         window.addEventListener("keydown", onKey);
         return () => window.removeEventListener("keydown", onKey);
     }, [open, onClose]);
-
-    // fetch accounts
-    useEffect(() => {
-        if (!open) return;
-
-        if (!debounced) {
-            setUsers([]);
-            setErr(null);
-            setLoading(false);
-            abortRef.current?.abort();
-            return;
-        }
-
-        abortRef.current?.abort();
-        const ac = new AbortController();
-        abortRef.current = ac;
-
-        setLoading(true);
-        setErr(null);
-
-        searchAccounts(debounced, ac.signal)
-            .then((res) => setUsers(res))
-            .catch((e: any) => {
-                if (e?.name === "AbortError") return;
-                setErr("Search failed");
-                setUsers([]);
-            })
-            .finally(() => setLoading(false));
-
-        return () => ac.abort();
-    }, [debounced, open]);
 
     const addRecent = (u: User) => {
         const item: User = { ...u };

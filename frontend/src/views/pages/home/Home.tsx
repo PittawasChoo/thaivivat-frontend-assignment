@@ -1,23 +1,47 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useMemo } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { likePost, unlikePost } from "apis/postsApi";
+import { fetchPosts, likePost, unlikePost } from "apis/postsApi";
 import FeedStatus from "components/feed-status/FeedStatus";
 import PostBox from "components/post-box/PostBox";
 import { useInfiniteObserver } from "hooks/useInfiniteObserver";
-import { useInfinitePosts } from "hooks/useInfinitePosts";
 
-import type { PostWithRelations } from "types/post";
+import type { PostsResponse, PostWithRelations } from "types/post";
 
-import { FeedMain, Page, PostList, Sentinel, Spacer, Title } from "./Home.styles";
+const LIMIT = 10;
+
+function postsKey(q: string) {
+    return ["posts", { q, limit: LIMIT }] as const;
+}
 
 export default function Home() {
-    const { posts, setPosts, isLoading, error, hasMore, loadMore } = useInfinitePosts({
-        limit: 10,
+    const q = ""; // if you have search in feed later, put it here
+    const queryClient = useQueryClient();
+
+    const postsQuery = useInfiniteQuery<PostsResponse>({
+        queryKey: postsKey(q),
+        initialPageParam: 1,
+        queryFn: ({ pageParam, signal }) =>
+            fetchPosts({ page: pageParam as number, limit: LIMIT, q, signal }),
+        getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     });
 
+    const posts = useMemo(
+        () => postsQuery.data?.pages.flatMap((p) => p.data) ?? [],
+        [postsQuery.data]
+    );
+
+    const hasMore = postsQuery.hasNextPage ?? false;
+    const isLoading = postsQuery.isFetchingNextPage || postsQuery.isLoading;
+    const error = postsQuery.isError
+        ? (postsQuery.error as any)?.message ?? "Something went wrong"
+        : null;
+
     const onIntersect = useCallback(() => {
-        if (!isLoading && hasMore) loadMore();
-    }, [isLoading, hasMore, loadMore]);
+        if (postsQuery.hasNextPage && !postsQuery.isFetchingNextPage) {
+            void postsQuery.fetchNextPage();
+        }
+    }, [postsQuery]);
 
     const sentinelRef = useInfiniteObserver({
         enabled: hasMore,
@@ -25,81 +49,101 @@ export default function Home() {
         rootMargin: "1000px",
     });
 
-    const postsRef = useRef<PostWithRelations[]>([]);
-    useEffect(() => {
-        postsRef.current = posts;
-    }, [posts]);
+    // --- Mutations (optimistic) ---
+    const toggleLikeMutation = useMutation({
+        mutationFn: async ({ postId, nextLiked }: { postId: string; nextLiked: boolean }) => {
+            return nextLiked ? likePost(postId) : unlikePost(postId);
+        },
 
-    const inflightRef = useRef(new Map<string, AbortController>());
+        onMutate: async ({ postId, nextLiked }) => {
+            await queryClient.cancelQueries({ queryKey: postsKey(q) });
 
-    const onToggleLike = useCallback(
-        async (id: number) => {
-            const postId = String(id);
+            // const prev = queryClient.getQueryData<ReturnType<typeof postsQuery>["data"]>(
+            //     postsKey(q)
+            // );
 
-            // cancel previous request for this post
-            const prev = inflightRef.current.get(postId);
-            if (prev) prev.abort();
-
-            const controller = new AbortController();
-            inflightRef.current.set(postId, controller);
-
-            // read from ref (always latest)
-            const snapshot = postsRef.current.find((p) => String(p.id) === postId);
-            if (!snapshot) {
-                inflightRef.current.delete(postId);
-                return;
-            }
-
-            const nextLiked = !snapshot.liked;
+            // query data shape is InfiniteData<PostsResponse> - we can treat it loosely
+            const previousData = queryClient.getQueryData<any>(postsKey(q));
 
             // optimistic update
-            setPosts((curr) =>
-                curr.map((p) => {
-                    if (String(p.id) !== postId) return p;
-                    const likesCount = Math.max(0, (p.likesCount ?? 0) + (nextLiked ? 1 : -1));
-                    return { ...p, liked: nextLiked, likesCount };
-                })
-            );
+            queryClient.setQueryData<any>(postsKey(q), (old: any) => {
+                if (!old) return old;
 
-            try {
-                const data = nextLiked
-                    ? await likePost(postId, controller.signal)
-                    : await unlikePost(postId, controller.signal);
+                return {
+                    ...old,
+                    pages: old.pages.map((page: PostsResponse) => ({
+                        ...page,
+                        data: page.data.map((p: PostWithRelations) => {
+                            if (String(p.id) !== postId) return p;
+                            const likesCount = Math.max(
+                                0,
+                                (p.likesCount ?? 0) + (nextLiked ? 1 : -1)
+                            );
+                            return { ...p, liked: nextLiked, likesCount };
+                        }),
+                    })),
+                };
+            });
 
-                // sync with server response
-                setPosts((curr) =>
-                    curr.map((p) =>
-                        String(p.id) === postId
-                            ? { ...p, liked: data.liked, likesCount: data.likesCount }
-                            : p
-                    )
-                );
-            } catch (e: any) {
-                if (e?.name === "AbortError") return;
-
-                // rollback
-                setPosts((curr) => curr.map((p) => (String(p.id) === postId ? snapshot : p)));
-
-                console.error(e);
-            } finally {
-                if (inflightRef.current.get(postId) === controller) {
-                    inflightRef.current.delete(postId);
-                }
-            }
+            return { previousData };
         },
-        [setPosts]
+
+        onError: (_err, _vars, ctx) => {
+            // rollback
+            if (ctx?.previousData) queryClient.setQueryData(postsKey(q), ctx.previousData);
+        },
+
+        onSuccess: (data, vars) => {
+            // sync canonical server response (optional but nice)
+            queryClient.setQueryData<any>(postsKey(q), (old: any) => {
+                if (!old) return old;
+                return {
+                    ...old,
+                    pages: old.pages.map((page: PostsResponse) => ({
+                        ...page,
+                        data: page.data.map((p: PostWithRelations) =>
+                            String(p.id) === vars.postId
+                                ? { ...p, liked: data.liked, likesCount: data.likesCount }
+                                : p
+                        ),
+                    })),
+                };
+            });
+        },
+    });
+
+    const onToggleLike = useCallback(
+        (id: number) => {
+            const postId = String(id);
+
+            // determine nextLiked from current cached data (stable)
+            const current = posts.find((p) => String(p.id) === postId);
+            if (!current) return;
+
+            toggleLikeMutation.mutate({ postId, nextLiked: !current.liked });
+        },
+        [posts, toggleLikeMutation]
     );
 
     return (
-        <Page>
-            <Title>Amstagrin</Title>
+        <div>
+            <h2 style={{ marginBottom: 12 }}>Amstagrin</h2>
 
-            <FeedMain>
-                <PostList>
+            <main
+                style={{
+                    maxWidth: 468,
+                    margin: "0 auto",
+                    padding: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "30px",
+                }}
+            >
+                <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
                     {posts.map((p) => (
                         <PostBox key={p.id} post={p} onToggleLike={onToggleLike} />
                     ))}
-                </PostList>
+                </div>
 
                 <FeedStatus
                     loading={isLoading}
@@ -108,10 +152,9 @@ export default function Home() {
                     hasAnyPosts={posts.length > 0}
                 />
 
-                {hasMore && <Spacer />}
-
-                <Sentinel ref={sentinelRef} />
-            </FeedMain>
-        </Page>
+                {hasMore && <div style={{ height: 50 }} />}
+                <div ref={sentinelRef} style={{ height: 1 }} />
+            </main>
+        </div>
     );
 }

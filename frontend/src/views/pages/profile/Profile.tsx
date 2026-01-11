@@ -1,6 +1,5 @@
-// src/pages/profile/Profile.tsx
-import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import Verified from "assets/icons/verified.png";
 import { getUserByUsername, getPostsByUserUsername } from "apis/usersApi";
@@ -8,7 +7,6 @@ import { formatToShortNumber } from "utils/number";
 
 import ProfileImage from "components/profile-image/ProfileImage";
 
-import type { User } from "types/user";
 import type { Post } from "types/post";
 
 import {
@@ -35,34 +33,26 @@ import {
 export default function Profile() {
     const { username = "" } = useParams();
 
-    const [user, setUser] = useState<User | null>(null);
-    const [posts, setPosts] = useState<Post[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const userQuery = useQuery({
+        queryKey: ["userByUsername", username],
+        enabled: !!username,
+        queryFn: ({ signal }) => getUserByUsername(username, signal),
+    });
 
-    useEffect(() => {
-        if (!username) return;
+    const postsQuery = useQuery({
+        queryKey: ["postsByUsername", username],
+        enabled: !!username,
+        queryFn: ({ signal }) => getPostsByUserUsername(username, signal),
+    });
 
-        const ac = new AbortController();
-        setLoading(true);
-        setError(null);
+    const loading = userQuery.isLoading || postsQuery.isLoading;
+    const error =
+        (userQuery.isError && ((userQuery.error as any)?.message ?? "Error")) ||
+        (postsQuery.isError && ((postsQuery.error as any)?.message ?? "Error")) ||
+        null;
 
-        (async () => {
-            try {
-                const u = await getUserByUsername(username, ac.signal);
-                const p = await getPostsByUserUsername(username, ac.signal);
-                setUser(u);
-                setPosts(p);
-            } catch (e: any) {
-                if (e?.name === "AbortError") return;
-                setError(e?.message ?? "Something went wrong");
-            } finally {
-                setLoading(false);
-            }
-        })();
-
-        return () => ac.abort();
-    }, [username]);
+    const user = userQuery.data ?? null;
+    const posts: Post[] = postsQuery.data ?? [];
 
     if (loading) return <Page>Loading profile…</Page>;
     if (error) return <Page>Error: {error}</Page>;

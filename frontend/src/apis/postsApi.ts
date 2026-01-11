@@ -12,7 +12,7 @@ export async function fetchPosts(params: {
 }): Promise<PostsResponse> {
     const { page, limit, q = "", signal } = params;
 
-    const url = new URL(baseURL + "api/posts");
+    const url = new URL("api/posts", baseURL);
     url.searchParams.set("page", String(page));
     url.searchParams.set("limit", String(limit));
     if (q) url.searchParams.set("q", q);
