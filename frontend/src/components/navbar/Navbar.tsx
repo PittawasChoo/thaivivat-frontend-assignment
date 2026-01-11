@@ -1,10 +1,11 @@
+// Navbar.tsx
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
 import ActiveHomeIcon from "assets/icons/home-active.png";
-import ActiveSearchIcon from "assets/icons/search-active.png";
 import HomeIcon from "assets/icons/home.png";
 import IgIcon from "assets/icons/instagram.png";
+import ActiveSearchIcon from "assets/icons/search-active.png";
 import SearchIcon from "assets/icons/search.png";
 
 import { useMediaQuery } from "hooks/useMediaQuery";
@@ -20,8 +21,10 @@ import {
     SearchToggle,
     SrOnly,
 } from "./Navbar.styles";
+
 import NavItem from "./nav-item/NavItem";
 import SearchPanel from "./search-panel/SearchPanel";
+import MobileSearch from "./mobile-search/MobileSearch";
 
 const MOBILE_BREAKPOINT = 775;
 const WIDE_BREAKPOINT = 1200;
@@ -38,41 +41,46 @@ export default function Navbar() {
     return (
         <>
             <NavShell $variant={isDesktop ? "left" : "top"} aria-label="Primary">
-                <BrandLink to="/" end>
+                <BrandLink $variant={isDesktop ? "left" : "top"} to="/" end>
                     <BrandIcon src={IgIcon} alt="Instagram" />
                     {isWide && <BrandText>Amstagrin</BrandText>}
                 </BrandLink>
 
-                <Items $variant={isDesktop ? "left" : "top"}>
-                    <NavItem
-                        variant={isDesktop ? "left" : "top"}
-                        to="/"
-                        label="Home"
-                        iconSrc={HomeIcon}
-                        activeIconSrc={ActiveHomeIcon}
-                        showLabel={isWide}
-                    />
+                {!isDesktop ? (
+                    <MobileSearch />
+                ) : (
+                    <>
+                        <Items $variant="left">
+                            <NavItem
+                                variant="left"
+                                to="/"
+                                label="Home"
+                                iconSrc={HomeIcon}
+                                activeIconSrc={ActiveHomeIcon}
+                                showLabel={isWide}
+                            />
 
-                    <SearchToggle
-                        type="button"
-                        data-search-toggle="true"
-                        $active={searchOpen}
-                        onClick={() => setSearchOpen((v) => !v)}
-                        aria-label="Search"
-                        aria-expanded={searchOpen}
-                    >
-                        <Icon
-                            src={searchOpen ? ActiveSearchIcon ?? SearchIcon : SearchIcon}
-                            alt=""
-                            aria-hidden="true"
-                        />
-                        {isWide && <Label>Search</Label>}
-                        <SrOnly>Search</SrOnly>
-                    </SearchToggle>
-                </Items>
+                            <SearchToggle
+                                type="button"
+                                data-search-toggle="true"
+                                $active={searchOpen}
+                                onClick={() => setSearchOpen((v) => !v)}
+                                aria-label="Search"
+                                aria-expanded={searchOpen}
+                            >
+                                <Icon
+                                    src={searchOpen ? ActiveSearchIcon ?? SearchIcon : SearchIcon}
+                                    alt=""
+                                    aria-hidden="true"
+                                />
+                                {isWide && <Label>Search</Label>}
+                                <SrOnly>Search</SrOnly>
+                            </SearchToggle>
+                        </Items>
+                    </>
+                )}
             </NavShell>
 
-            {/* Panel (desktop only) */}
             {isDesktop && (
                 <SearchPanel
                     isWide={isWide}

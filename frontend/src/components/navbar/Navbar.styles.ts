@@ -1,7 +1,11 @@
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 
-export const NavShell = styled.nav<{ $variant: "top" | "left" }>`
+type CssProps = {
+    $variant: "top" | "left";
+};
+
+export const NavShell = styled.nav<CssProps>`
     position: fixed;
     background: #0c1013;
     z-index: 50;
@@ -36,7 +40,7 @@ export const NavShell = styled.nav<{ $variant: "top" | "left" }>`
     }
 `;
 
-export const BrandLink = styled(NavLink)`
+export const BrandLink = styled(NavLink)<CssProps>`
     display: flex;
     align-items: center;
     gap: 10px;
@@ -44,6 +48,7 @@ export const BrandLink = styled(NavLink)`
     margin: 10px 0 32px 12px;
     text-decoration: none;
     color: white;
+    ${({ $variant }) => $variant === "top" && `padding-top: 24px;`}
 `;
 
 export const BrandIcon = styled.img`
