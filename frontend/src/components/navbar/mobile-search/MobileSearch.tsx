@@ -59,12 +59,12 @@ export default function MobileSearch() {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-    // Close dropdown on route change (IG-like)
+    // close dropdown on route change
     useEffect(() => {
         setFocused(false);
     }, [location.pathname]);
 
-    // Click outside to hide dropdown
+    // click outside to hide dropdown
     useEffect(() => {
         if (!focused) return;
 
@@ -111,7 +111,7 @@ export default function MobileSearch() {
         saveRecents([]);
     };
 
-    const showDropdown = focused; // ✅ requirement: only show while focused
+    const showDropdown = focused; //only show while focused
 
     return (
         <>

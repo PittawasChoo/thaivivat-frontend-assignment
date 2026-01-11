@@ -80,7 +80,7 @@ export default function SearchPanel({ isWide, open, onClose }: Props) {
         return () => window.clearTimeout(t);
     }, [open]);
 
-    // close on ESC
+    // close on esc
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
@@ -90,14 +90,14 @@ export default function SearchPanel({ isWide, open, onClose }: Props) {
         return () => window.removeEventListener("keydown", onKey);
     }, [open, onClose]);
 
-    // close on outside click (BUT ignore navbar search toggle)
+    // close on outside click
     useEffect(() => {
         if (!open) return;
 
         const onDown = (e: MouseEvent) => {
             const target = e.target as HTMLElement | null;
 
-            // ✅ ignore clicking the navbar Search button (so it can toggle)
+            // ignore clicking the navbar Search button (so it can toggle)
             if (target?.closest?.('[data-search-toggle="true"]')) return;
 
             const el = panelRef.current;
@@ -109,7 +109,6 @@ export default function SearchPanel({ isWide, open, onClose }: Props) {
         return () => document.removeEventListener("mousedown", onDown);
     }, [open, onClose]);
 
-    // React Query search
     const searchQuery = useQuery<User[]>({
         queryKey: ["searchAccounts", debounced],
         enabled: open && !!debounced,
@@ -142,7 +141,7 @@ export default function SearchPanel({ isWide, open, onClose }: Props) {
         <AnimatePresence>
             {open && (
                 <>
-                    {/* Optional dim backdrop */}
+                    {/* Overlay */}
                     <Backdrop
                         as={motion.div}
                         initial={{ opacity: 0 }}

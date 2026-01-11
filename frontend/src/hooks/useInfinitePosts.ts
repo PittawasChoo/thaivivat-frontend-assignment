@@ -11,7 +11,7 @@ type UseInfinitePostsArgs = {
 
 export function useInfinitePosts({ limit = 10, q = "" }: UseInfinitePostsArgs) {
     const [posts, setPosts] = useState<PostWithRelations[]>([]);
-    const [page, setPage] = useState(0); // 0 = not loaded yet
+    const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
     const [isLoading, setIsLoading] = useState(false);

@@ -12,19 +12,18 @@ import type { PostsResponse, PostWithRelations } from "types/post";
 
 const LIMIT = 10;
 
-function postsKey(q: string) {
-    return ["posts", { q, limit: LIMIT }] as const;
+function postsKey() {
+    return ["posts", { limit: LIMIT }] as const;
 }
 
 export default function Home() {
-    const q = ""; // if you have search in feed later, put it here
     const queryClient = useQueryClient();
 
     const postsQuery = useInfiniteQuery<PostsResponse>({
-        queryKey: postsKey(q),
+        queryKey: postsKey(),
         initialPageParam: 1,
         queryFn: ({ pageParam, signal }) =>
-            fetchPosts({ page: pageParam as number, limit: LIMIT, q, signal }),
+            fetchPosts({ page: pageParam as number, limit: LIMIT, q: "", signal }),
         getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.page + 1 : undefined),
     });
 
@@ -51,24 +50,19 @@ export default function Home() {
         rootMargin: "1000px",
     });
 
-    // --- Mutations (optimistic) ---
+    // optimistic
     const toggleLikeMutation = useMutation({
         mutationFn: async ({ postId, nextLiked }: { postId: string; nextLiked: boolean }) => {
             return nextLiked ? likePost(postId) : unlikePost(postId);
         },
 
         onMutate: async ({ postId, nextLiked }) => {
-            await queryClient.cancelQueries({ queryKey: postsKey(q) });
+            await queryClient.cancelQueries({ queryKey: postsKey() });
 
-            // const prev = queryClient.getQueryData<ReturnType<typeof postsQuery>["data"]>(
-            //     postsKey(q)
-            // );
-
-            // query data shape is InfiniteData<PostsResponse> - we can treat it loosely
-            const previousData = queryClient.getQueryData<any>(postsKey(q));
+            const previousData = queryClient.getQueryData<any>(postsKey());
 
             // optimistic update
-            queryClient.setQueryData<any>(postsKey(q), (old: any) => {
+            queryClient.setQueryData<any>(postsKey(), (old: any) => {
                 if (!old) return old;
 
                 return {
@@ -92,12 +86,12 @@ export default function Home() {
 
         onError: (_err, _vars, ctx) => {
             // rollback
-            if (ctx?.previousData) queryClient.setQueryData(postsKey(q), ctx.previousData);
+            if (ctx?.previousData) queryClient.setQueryData(postsKey(), ctx.previousData);
         },
 
         onSuccess: (data, vars) => {
-            // sync canonical server response (optional but nice)
-            queryClient.setQueryData<any>(postsKey(q), (old: any) => {
+            // sync canonical server response
+            queryClient.setQueryData<any>(postsKey(), (old: any) => {
                 if (!old) return old;
                 return {
                     ...old,

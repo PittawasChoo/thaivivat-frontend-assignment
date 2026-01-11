@@ -61,7 +61,7 @@ export const Username = styled.div`
     white-space: nowrap;
 
     @media (max-width: 420px) {
-        max-width: 220px; /* prevents overflow on tiny screens */
+        max-width: 220px;
     }
 `;
 
@@ -154,7 +154,7 @@ export const GridImg = styled.img`
     object-fit: cover;
     display: block;
     user-select: none;
-    pointer-events: none; /* ✅ no click effects */
+    pointer-events: none;
 `;
 
 export const EmptyBox = styled.div`

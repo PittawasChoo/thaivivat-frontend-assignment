@@ -25,7 +25,7 @@ const SmartImage = ({
 
     const [currentSrc, setCurrentSrc] = useState(src);
 
-    // keep in sync if parent changes src (important for carousels)
+    // keep in sync if parent changes src (for carousels)
     useEffect(() => {
         retried.current = false;
         setCurrentSrc(src);
@@ -34,7 +34,7 @@ const SmartImage = ({
     const handleClick = () => {
         if (!onClick) return;
 
-        // already waiting for potential dblclick
+        // if already waiting for potential dblclick
         if (clickTimer.current) return;
 
         clickTimer.current = window.setTimeout(() => {
@@ -79,7 +79,7 @@ const SmartImage = ({
                 }
 
                 // fallback placeholder
-                setCurrentSrc("/placeholder.jpeg"); // put a placeholder in /public
+                setCurrentSrc("/placeholder.jpeg");
             }}
         />
     );

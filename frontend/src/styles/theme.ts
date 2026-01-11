@@ -5,7 +5,7 @@ export const theme: DefaultTheme = {
         background: "#000000",
         text: "#ffffff",
         border: "#dbdbdb",
-        primary: "#0095f6", // Instagram blue
-        secondary: "#8e8e8e", // muted text
+        primary: "#0095f6",
+        secondary: "#8e8e8e",
     },
 };

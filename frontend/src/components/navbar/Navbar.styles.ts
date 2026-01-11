@@ -96,7 +96,6 @@ export const SearchToggle = styled.button<{ $active: boolean }>`
         background: rgba(255, 255, 255, 0.06);
     }
 
-    /* top layout padding */
     @media (max-width: 774px) {
         padding: 0 10px;
     }

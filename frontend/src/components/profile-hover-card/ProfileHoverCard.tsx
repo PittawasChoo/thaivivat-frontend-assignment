@@ -29,8 +29,8 @@ import {
 
 type ProfileHoverCardProps = {
     user: User;
-    children: React.ReactNode; // the thing you hover (username / avatar)
-    renderCard?: (user: User) => React.ReactNode; // optional custom UI
+    children: React.ReactNode;
+    renderCard?: (user: User) => React.ReactNode; // custom UI
     openDelayMs?: number;
     closeDelayMs?: number;
 };
@@ -96,7 +96,7 @@ const ProfileHoverCard = ({
         closeTimer.current = window.setTimeout(() => setOpen(false), closeDelayMs);
     };
 
-    // Reposition on open + on scroll/resize
+    // reposition on open + on scroll/resize
     useLayoutEffect(() => {
         if (!open) return;
 
@@ -113,7 +113,7 @@ const ProfileHoverCard = ({
         };
     }, [open]);
 
-    // close on Escape
+    // close on esc
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
