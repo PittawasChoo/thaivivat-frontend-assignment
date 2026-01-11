@@ -1,10 +1,17 @@
-import styled from "styled-components";
+import { styled } from "styled-components";
 import { NavLink } from "react-router-dom";
+
+export const Backdrop = styled.div`
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 9;
+`;
 
 export const Panel = styled.div<{ $left: number }>`
     position: fixed;
     top: 0;
-    left: ${({ $left }) => `${$left}px`};
+    left: ${({ $left }) => $left}px;
     height: 100vh;
     width: 420px;
     background: #0c1013;
@@ -20,7 +27,7 @@ export const Header = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 20px 16px 16px 24px;
+    padding: 16px;
 `;
 
 export const Title = styled.div`
@@ -28,7 +35,7 @@ export const Title = styled.div`
     font-weight: 900;
 `;
 
-export const IconButton = styled.button`
+export const CloseButton = styled.button`
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -38,7 +45,7 @@ export const IconButton = styled.button`
     cursor: pointer;
 `;
 
-export const SearchBox = styled.div`
+export const SearchBar = styled.div`
     position: relative;
     width: 100%;
     padding: 16px 16px 12px 16px;
@@ -74,18 +81,18 @@ export const Body = styled.div`
     overflow: auto;
 `;
 
-export const SectionHeader = styled.div`
+export const RecentsHeader = styled.div`
     display: flex;
     justify-content: space-between;
     margin: 12px 0;
 `;
 
-export const SectionTitle = styled.div`
+export const RecentsTitle = styled.div`
     font-weight: 900;
     padding: 0 16px;
 `;
 
-export const LinkButton = styled.button`
+export const ClearAllButton = styled.button`
     border: none;
     background: transparent;
     color: #7aa7ff;
@@ -94,9 +101,10 @@ export const LinkButton = styled.button`
     padding: 0 16px;
 `;
 
-export const Muted = styled.div`
+export const EmptyText = styled.div`
     opacity: 0.7;
     padding: 12px 16px;
+    color: #fff;
 `;
 
 export const ErrorBox = styled.div`
@@ -104,11 +112,18 @@ export const ErrorBox = styled.div`
     padding: 12px;
     border-radius: 12px;
     background: rgba(255, 0, 0, 0.08);
+    color: #fff;
 `;
 
 export const List = styled.div`
     display: flex;
     flex-direction: column;
+`;
+
+export const RecentRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 `;
 
 export const RowLink = styled(NavLink)`
@@ -127,53 +142,36 @@ export const RowLink = styled(NavLink)`
     }
 `;
 
-export const RecentRow = styled.div`
+export const ResultLink = styled(NavLink)`
+    width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
     gap: 10px;
+    align-items: center;
+    text-decoration: none;
     color: #fff;
+    padding: 12px 24px;
 
     &:hover {
         background: rgba(255, 255, 255, 0.06);
-    }
-`;
-
-export const RecentLink = styled(NavLink)`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #fff;
-    text-decoration: none;
-    padding: 12px 24px;
-    width: 100%;
-
-    &:hover {
         text-decoration: none;
         color: #fff;
     }
 `;
 
-export const RemoveButton = styled.button`
-    border: none;
-    background: transparent;
-    color: #aaa;
-    cursor: pointer;
-    padding: 12px 24px;
-`;
-
-export const UserMeta = styled.div`
+export const RowText = styled.div`
     display: flex;
     flex-direction: column;
+    min-width: 0;
 `;
 
-export const UserTop = styled.div`
+export const RowTop = styled.div`
     display: flex;
     gap: 6px;
     align-items: center;
+    min-width: 0;
 `;
 
-export const Username = styled.span`
+export const Strong = styled.span`
     font-weight: 900;
 `;
 
@@ -182,11 +180,21 @@ export const VerifiedIcon = styled.img`
     height: 16px;
 `;
 
-export const UserSub = styled.div`
+export const RowSub = styled.div`
     font-size: 14px;
     opacity: 0.7;
     text-align: left;
     gap: 4px;
     display: flex;
     align-items: center;
+`;
+
+export const Dot = styled.span``;
+
+export const RemoveButton = styled.button`
+    border: none;
+    background: transparent;
+    color: #aaa;
+    cursor: pointer;
+    padding: 12px 24px;
 `;

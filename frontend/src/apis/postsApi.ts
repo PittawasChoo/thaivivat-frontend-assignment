@@ -1,8 +1,8 @@
 import type { PostsResponse } from "types/post";
 
-export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
 const baseURL = new URL("http://localhost:4000"); // This should be stored in an environment variable in production
+
+export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function fetchPosts(params: {
     page: number;

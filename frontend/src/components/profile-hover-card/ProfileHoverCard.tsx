@@ -1,12 +1,13 @@
-// src/components/profile-hover-card/ProfileHoverCard.tsx
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 
-import ProfileImage from "components/profile-image/ProfileImage";
 import Verified from "assets/icons/verified.png";
 
+import ProfileImage from "components/profile-image/ProfileImage";
+
 import type { User } from "types/user";
+
 import { formatToShortNumber } from "utils/number";
 
 import {

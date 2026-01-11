@@ -1,6 +1,6 @@
-import { NavLinkFull } from "./NavItem.styles";
+import { Icon, SrOnly, Label } from "../Navbar.styles";
 
-import { Icon, ItemButton, SrOnly, Label } from "../Navbar.styles";
+import { NavLinkFull, ItemButton } from "./NavItem.styles";
 
 type NavItemProps = {
     variant: "top" | "left";

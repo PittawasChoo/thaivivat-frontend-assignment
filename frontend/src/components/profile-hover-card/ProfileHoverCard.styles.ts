@@ -1,4 +1,3 @@
-// src/components/profile-hover-card/ProfileHoverCard.styles.ts
 import styled from "styled-components";
 
 export const Anchor = styled.span`

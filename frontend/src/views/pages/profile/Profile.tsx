@@ -1,13 +1,15 @@
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
-import Verified from "assets/icons/verified.png";
 import { getUserByUsername, getPostsByUserUsername } from "apis/usersApi";
-import { formatToShortNumber } from "utils/number";
+
+import Verified from "assets/icons/verified.png";
 
 import ProfileImage from "components/profile-image/ProfileImage";
 
 import type { Post } from "types/post";
+
+import { formatToShortNumber } from "utils/number";
 
 import {
     Actions,

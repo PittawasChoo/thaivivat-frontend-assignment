@@ -1,42 +1,39 @@
-// src/components/navbar/Navbar.styles.ts
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 
-export const MOBILE_BREAKPOINT = 775;
-export const WIDE_BREAKPOINT = 1200;
-
-export const Nav = styled.nav<{ $variant: "top" | "left" }>`
+export const NavShell = styled.nav<{ $variant: "top" | "left" }>`
     position: fixed;
+    background: #0c1013;
     z-index: 50;
     display: flex;
-    background: #0c1013;
+
     border-color: rgba(200, 200, 200, 0.3);
 
     ${({ $variant }) =>
         $variant === "top"
-            ? css`
-                  top: 0;
-                  left: 0;
-                  right: 0;
-                  height: 56px;
-                  padding: 0 12px;
-                  align-items: center;
-                  justify-content: space-between;
-                  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-              `
-            : css`
-                  top: 0;
-                  left: 0;
-                  bottom: 0;
-                  width: 72px;
-                  padding: 16px 12px;
-                  flex-direction: column;
-                  border-right: 1px solid rgba(255, 255, 255, 0.08);
+            ? `
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 56px;
+                padding: 0 12px;
+                align-items: center;
+                justify-content: space-between;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            `
+            : `
+                top: 0;
+                left: 0;
+                bottom: 0;
+                width: 72px;
+                padding: 16px 12px;
+                flex-direction: column;
+                border-right: 1px solid rgba(255, 255, 255, 0.08);
+            `}
 
-                  @media (min-width: ${WIDE_BREAKPOINT}px) {
-                      width: 240px;
-                  }
-              `}
+    @media (min-width: 1200px) {
+        ${({ $variant }) => ($variant === "left" ? `width: 240px;` : ``)}
+    }
 `;
 
 export const BrandLink = styled(NavLink)`
@@ -65,17 +62,17 @@ export const Items = styled.div<{ $variant: "top" | "left" }>`
 
     ${({ $variant }) =>
         $variant === "top"
-            ? css`
-                  flex-direction: row;
-                  align-items: center;
-              `
-            : css`
-                  margin-top: 16px;
-                  flex-direction: column;
-              `}
+            ? `
+    flex-direction: row;
+    align-items: center;
+  `
+            : `
+    margin-top: 16px;
+    flex-direction: column;
+  `}
 `;
 
-export const ItemButton = styled.div<{ $variant: "top" | "left"; $active?: boolean }>`
+export const SearchToggle = styled.button<{ $active: boolean }>`
     width: 100%;
     display: inline-flex;
     align-items: center;
@@ -83,27 +80,20 @@ export const ItemButton = styled.div<{ $variant: "top" | "left"; $active?: boole
     height: 44px;
     border-radius: 12px;
     color: rgba(255, 255, 255, 0.9);
-    text-decoration: none;
     cursor: pointer;
-    position: relative;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    font-weight: ${({ $active }) => ($active ? 700 : 400)};
 
-    ${({ $variant }) =>
-        $variant === "top"
-            ? css`
-                  padding: 0 10px;
-              `
-            : css`
-                  padding: 0;
-              `}
-
-    ${({ $active }) =>
-        $active &&
-        css`
-            font-weight: 700;
-        `}
-
-  &:hover {
+    &:hover {
         background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* top layout padding */
+    @media (max-width: 774px) {
+        padding: 0 10px;
     }
 `;
 

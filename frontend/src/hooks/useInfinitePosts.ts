@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+
 import { fetchPosts } from "apis/postsApi";
+
 import type { PostWithRelations } from "types/post";
 
 type UseInfinitePostsArgs = {

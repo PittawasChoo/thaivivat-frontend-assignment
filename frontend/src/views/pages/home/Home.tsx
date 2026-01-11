@@ -2,8 +2,10 @@ import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { fetchPosts, likePost, unlikePost } from "apis/postsApi";
+
 import FeedStatus from "components/feed-status/FeedStatus";
 import PostBox from "components/post-box/PostBox";
+
 import { useInfiniteObserver } from "hooks/useInfiniteObserver";
 
 import type { PostsResponse, PostWithRelations } from "types/post";

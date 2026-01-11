@@ -1,4 +1,3 @@
-// src/layout/Layout.styles.ts
 import styled from "styled-components";
 
 const MOBILE_TOP_NAV_HEIGHT = 56;
