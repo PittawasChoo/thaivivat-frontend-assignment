@@ -124,6 +124,12 @@ export const RecentRow = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+        color: #fff;
+    }
 `;
 
 export const RowLink = styled(NavLink)`
@@ -136,7 +142,6 @@ export const RowLink = styled(NavLink)`
     padding: 12px 24px;
 
     &:hover {
-        background: rgba(255, 255, 255, 0.06);
         text-decoration: none;
         color: #fff;
     }
