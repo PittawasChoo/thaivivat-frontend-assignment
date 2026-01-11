@@ -2,57 +2,38 @@ import { useNavigate } from "react-router-dom";
 
 import type { User } from "types/user";
 
-type Props = {
+import { Container, Avatar } from "./ProfileImage.styles";
+
+type ProfileImageProps = {
     user: User;
     width?: number;
     height?: number;
+    clickable?: boolean;
 };
 
-const ProfileImage = ({ user, width = 50, height = 50 }: Props) => {
+const ProfileImage = ({ user, width = 50, height = 50, clickable = true }: ProfileImageProps) => {
+    const navigate = useNavigate();
+
     const imageWidth = width - 6;
     const imageHeight = height - 6;
 
-    const navigate = useNavigate();
-
     return (
-        <div
-            style={{
-                ...styles.profileImgContainer,
-                ...(user.hasStory ? styles.hasStory : {}),
-                width,
-                height,
-            }}
-            onClick={() => navigate(`/profile/${user.username}`)}
+        <Container
+            $width={width}
+            $height={height}
+            $hasStory={user.hasStory}
+            $clickable={clickable}
+            onClick={clickable ? () => navigate(`/profile/${user.username}`) : undefined}
         >
-            <img
-                style={{ ...styles.profileImg, width: imageWidth, height: imageHeight }}
+            <Avatar
                 src={user.avatarUrl}
                 alt=""
                 aria-hidden="true"
+                $width={imageWidth}
+                $height={imageHeight}
             />
-        </div>
+        </Container>
     );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-    profileImgContainer: {
-        borderRadius: "50%",
-        overflow: "hidden",
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-    },
-    hasStory: {
-        backgroundImage:
-            "linear-gradient(45deg, #ffa95f 5%, #f47838 15%, #d92d7a 70%, #962fbf 80%, #4f5bd5 95%)",
-    },
-    profileImg: {
-        borderRadius: "50%",
-        border: "4px solid #121b21",
-        objectFit: "cover",
-    },
 };
 
 export default ProfileImage;

@@ -31,6 +31,7 @@
             "contexts/*": ["src/contexts/*"],
             "hooks/*": ["src/hooks/*"],
             "layouts/*": ["src/layouts/*"],
+            "styles/*": ["src/styles/*"],
             "types/*": ["src/types/*"],
             "utils/*": ["src/utils/*"],
             "views/*": ["src/views/*"]

@@ -1,12 +1,14 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import { likePost, unlikePost } from "apis/postsApi";
-
 import FeedStatus from "components/feed-status/FeedStatus";
 import PostBox from "components/post-box/PostBox";
-
 import { useInfiniteObserver } from "hooks/useInfiniteObserver";
 import { useInfinitePosts } from "hooks/useInfinitePosts";
+
+import type { PostWithRelations } from "types/post";
+
+import { FeedMain, Page, PostList, Sentinel, Spacer, Title } from "./Home.styles";
 
 export default function Home() {
     const { posts, setPosts, isLoading, error, hasMore, loadMore } = useInfinitePosts({
@@ -18,30 +20,39 @@ export default function Home() {
     }, [isLoading, hasMore, loadMore]);
 
     const sentinelRef = useInfiniteObserver({
-        enabled: hasMore, // stop observing when no more
+        enabled: hasMore,
         onIntersect,
         rootMargin: "1000px",
     });
+
+    const postsRef = useRef<PostWithRelations[]>([]);
+    useEffect(() => {
+        postsRef.current = posts;
+    }, [posts]);
 
     const inflightRef = useRef(new Map<string, AbortController>());
 
     const onToggleLike = useCallback(
         async (id: number) => {
             const postId = String(id);
-            // 1) cancel any previous request for this post (optional but recommended)
+
+            // cancel previous request for this post
             const prev = inflightRef.current.get(postId);
             if (prev) prev.abort();
 
             const controller = new AbortController();
             inflightRef.current.set(postId, controller);
 
-            // 2) snapshot previous post (for rollback)
-            const prevPost = posts.find((p) => String(p.id) === postId);
-            if (!prevPost) return;
+            // read from ref (always latest)
+            const snapshot = postsRef.current.find((p) => String(p.id) === postId);
+            if (!snapshot) {
+                inflightRef.current.delete(postId);
+                return;
+            }
 
-            const nextLiked = !prevPost.liked;
+            const nextLiked = !snapshot.liked;
 
-            // 3) optimistic UI update (instant)
+            // optimistic update
             setPosts((curr) =>
                 curr.map((p) => {
                     if (String(p.id) !== postId) return p;
@@ -51,12 +62,11 @@ export default function Home() {
             );
 
             try {
-                // 4) send request
                 const data = nextLiked
                     ? await likePost(postId, controller.signal)
                     : await unlikePost(postId, controller.signal);
 
-                // 5) (optional) sync with server canonical response
+                // sync with server response
                 setPosts((curr) =>
                     curr.map((p) =>
                         String(p.id) === postId
@@ -65,43 +75,31 @@ export default function Home() {
                     )
                 );
             } catch (e: any) {
-                // If aborted due to rapid toggling, ignore
                 if (e?.name === "AbortError") return;
 
-                // 6) rollback on failure
-                setPosts((curr) => curr.map((p) => (String(p.id) === postId ? prevPost : p)));
+                // rollback
+                setPosts((curr) => curr.map((p) => (String(p.id) === postId ? snapshot : p)));
 
-                // Optional: toast/snackbar
                 console.error(e);
             } finally {
-                // 7) clear inflight if it's still the same controller
                 if (inflightRef.current.get(postId) === controller) {
                     inflightRef.current.delete(postId);
                 }
             }
         },
-        [posts, setPosts]
+        [setPosts]
     );
 
     return (
-        <div>
-            <h2 style={{ marginBottom: 12 }}>Amstagrin</h2>
+        <Page>
+            <Title>Amstagrin</Title>
 
-            <main
-                style={{
-                    maxWidth: 468,
-                    margin: "0 auto",
-                    padding: 12,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "30px",
-                }}
-            >
-                <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+            <FeedMain>
+                <PostList>
                     {posts.map((p) => (
                         <PostBox key={p.id} post={p} onToggleLike={onToggleLike} />
                     ))}
-                </div>
+                </PostList>
 
                 <FeedStatus
                     loading={isLoading}
@@ -110,15 +108,10 @@ export default function Home() {
                     hasAnyPosts={posts.length > 0}
                 />
 
-                {/* Sentinel at bottom */}
-                {hasMore && (
-                    <>
-                        <div style={{ height: "50px" }} />
-                    </>
-                )}
+                {hasMore && <Spacer />}
 
-                <div ref={sentinelRef} style={{ height: 1 }} />
-            </main>
-        </div>
+                <Sentinel ref={sentinelRef} />
+            </FeedMain>
+        </Page>
     );
 }

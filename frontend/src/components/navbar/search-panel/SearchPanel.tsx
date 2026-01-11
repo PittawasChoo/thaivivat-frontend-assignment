@@ -1,61 +1,57 @@
+// src/components/navbar/search-panel/SearchPanel.tsx
 import { useEffect, useRef, useState } from "react";
-import { NavLink } from "react-router-dom";
 
-import { searchAccounts, type SearchUser } from "apis/searchApi";
-
+import { searchAccounts } from "apis/searchApi";
 import Verified from "assets/icons/verified.png";
-
+import ProfileImage from "components/profile-image/ProfileImage";
 import { useDebounce } from "hooks/useDebounce";
+import type { User } from "types/user";
 
 import { formatToShortNumber } from "utils/number";
 
-import styles from "./SearchPanel.module.css";
+import {
+    Body,
+    ClearButton,
+    ErrorBox,
+    Header,
+    IconButton,
+    Input,
+    LinkButton,
+    List,
+    Muted,
+    Panel,
+    RecentLink,
+    RecentRow,
+    RemoveButton,
+    SearchBox,
+    SectionHeader,
+    SectionTitle,
+    Title,
+    RowLink,
+    UserMeta,
+    UserSub,
+    UserTop,
+    Username,
+    VerifiedIcon,
+} from "./SearchPanel.styles";
 
-type Recent = {
-    id: number;
-    username: string;
-    name: string;
-    avatarUrl: string;
-    isVerified?: boolean;
-    hasStory: boolean;
-    followersCount: number;
-    followingsCount: number;
-    postCount: number;
-};
+import { loadRecents, saveRecents } from "../utils/caching";
 
-const RECENTS_KEY = "ig_search_recents_accounts_v1";
-
-function loadRecents(): Recent[] {
-    try {
-        const raw = localStorage.getItem(RECENTS_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr.slice(0, 10) : [];
-    } catch {
-        return [];
-    }
-}
-
-function saveRecents(items: Recent[]) {
-    localStorage.setItem(RECENTS_KEY, JSON.stringify(items.slice(0, 10)));
-}
-
-export default function SearchPanel({
-    isWide,
-    open,
-    onClose,
-}: {
+type SearchPanelProps = {
     isWide: boolean;
     open: boolean;
     onClose: () => void;
-}) {
+};
+
+const SearchPanel = ({ isWide, open, onClose }: SearchPanelProps) => {
     const [q, setQ] = useState("");
     const debounced = useDebounce(q.trim(), 600);
 
     const [loading, setLoading] = useState(false);
-    const [users, setUsers] = useState<SearchUser[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [err, setErr] = useState<string | null>(null);
 
-    const [recents, setRecents] = useState<Recent[]>(() => loadRecents());
+    const [recents, setRecents] = useState<User[]>(() => loadRecents());
 
     const panelRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -65,13 +61,14 @@ export default function SearchPanel({
     useEffect(() => {
         if (open) {
             setTimeout(() => inputRef.current?.focus(), 0);
-        } else {
-            setQ("");
-            setUsers([]);
-            setErr(null);
-            setLoading(false);
-            abortRef.current?.abort();
+            return;
         }
+
+        setQ("");
+        setUsers([]);
+        setErr(null);
+        setLoading(false);
+        abortRef.current?.abort();
     }, [open]);
 
     // close on outside click
@@ -128,8 +125,8 @@ export default function SearchPanel({
         return () => ac.abort();
     }, [debounced, open]);
 
-    const addRecent = (u: SearchUser) => {
-        const item: Recent = { ...u };
+    const addRecent = (u: User) => {
+        const item: User = { ...u };
         const next = [item, ...recents.filter((r) => r.id !== u.id)];
         setRecents(next);
         saveRecents(next);
@@ -148,208 +145,88 @@ export default function SearchPanel({
 
     if (!open) return null;
 
-    return (
-        <div
-            ref={panelRef}
-            style={{
-                position: "fixed",
-                top: 0,
-                left: isWide ? 264 : 72, // adjust to your left nav width
-                height: "100vh",
-                width: 420,
-                background: "#0c1013",
-                borderRight: "1px solid rgba(255,255,255,0.08)",
-                zIndex: 10,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-                display: "flex",
-                flexDirection: "column",
-                gap: 12,
-            }}
-            role="dialog"
-            aria-label="Search"
-        >
-            <div
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: 16,
-                }}
-            >
-                <div style={{ fontSize: 22, fontWeight: 900 }}>Search</div>
-                <button
-                    onClick={onClose}
-                    style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        border: "1px solid rgba(255,255,255,0.15)",
-                        background: "rgba(255,255,255,0.06)",
-                        color: "#fff",
-                        cursor: "pointer",
-                    }}
-                    aria-label="Close"
-                >
-                    ✕
-                </button>
-            </div>
+    const left = isWide ? 264 : 72; // match your left nav width
 
-            <div style={{ position: "relative", width: "100%", padding: "16px 16px 12px 16px" }}>
-                <input
+    return (
+        <Panel ref={panelRef} $left={left} role="dialog" aria-label="Search">
+            <Header>
+                <Title>Search</Title>
+                <IconButton onClick={onClose} aria-label="Close">
+                    ✕
+                </IconButton>
+            </Header>
+
+            <SearchBox>
+                <Input
                     ref={inputRef}
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search"
-                    style={{
-                        width: "100%",
-                        padding: "12px 40px 12px 14px",
-                        borderRadius: 12,
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        background: "rgba(255,255,255,0.06)",
-                        color: "#fff",
-                        outline: "none",
-                        fontSize: 14,
-                    }}
                 />
                 {q.length > 0 && (
-                    <button
-                        type="button"
-                        onClick={() => setQ("")}
-                        aria-label="Clear"
-                        style={{
-                            position: "absolute",
-                            right: 26,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            width: 28,
-                            height: 28,
-                            borderRadius: "50%",
-                            border: "1px solid rgba(255,255,255,0.15)",
-                            background: "rgba(255,255,255,0.08)",
-                            color: "#fff",
-                            cursor: "pointer",
-                        }}
-                    >
+                    <ClearButton type="button" onClick={() => setQ("")} aria-label="Clear">
                         ✕
-                    </button>
+                    </ClearButton>
                 )}
-            </div>
+            </SearchBox>
 
-            <div style={{ flex: 1, overflow: "auto" }}>
+            <Body>
                 {/* Empty query => Recents */}
                 {!debounced && (
                     <>
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                margin: "12px 0",
-                            }}
-                        >
-                            <div style={{ fontWeight: 900, padding: "0 16px" }}>Recent</div>
+                        <SectionHeader>
+                            <SectionTitle>Recent</SectionTitle>
                             {recents.length > 0 && (
-                                <button
-                                    onClick={clearAll}
-                                    style={{
-                                        border: "none",
-                                        background: "transparent",
-                                        color: "#7aa7ff",
-                                        cursor: "pointer",
-                                        fontWeight: 800,
-                                        padding: "0 16px",
-                                    }}
-                                >
-                                    Clear all
-                                </button>
+                                <LinkButton onClick={clearAll}>Clear all</LinkButton>
                             )}
-                        </div>
+                        </SectionHeader>
 
                         {recents.length === 0 ? (
-                            <div style={{ opacity: 0.7, padding: "12px 0" }}>
-                                No recent searches.
-                            </div>
+                            <Muted>No recent searches.</Muted>
                         ) : (
-                            <div style={{ display: "flex", flexDirection: "column" }}>
+                            <List>
                                 {recents.map((r) => (
-                                    <div key={r.id} className={styles["recent-item-container"]}>
-                                        <NavLink
-                                            to={`/profile/${r.username}`}
-                                            onClick={onClose}
-                                            className={styles["recent-item"]}
-                                        >
-                                            <div
-                                                className={`${styles["profile-container"]} ${
-                                                    r.hasStory ? styles["has-story"] : ""
-                                                }`}
-                                            >
-                                                <img
-                                                    src={r.avatarUrl}
-                                                    alt=""
-                                                    aria-hidden="true"
-                                                    className={styles["profile-img"]}
-                                                />
-                                            </div>
-                                            <div
-                                                style={{ display: "flex", flexDirection: "column" }}
-                                            >
-                                                <div
-                                                    style={{
-                                                        display: "flex",
-                                                        gap: 6,
-                                                        alignItems: "center",
-                                                    }}
-                                                >
-                                                    <span style={{ fontWeight: 900 }}>
-                                                        {r.username}
-                                                    </span>
+                                    <RecentRow key={r.id}>
+                                        <RecentLink to={`/profile/${r.username}`} onClick={onClose}>
+                                            <ProfileImage
+                                                user={r}
+                                                width={56}
+                                                height={56}
+                                                clickable={false}
+                                            />
+
+                                            <UserMeta>
+                                                <UserTop>
+                                                    <Username>{r.username}</Username>
                                                     {r.isVerified && (
-                                                        <img
-                                                            style={{
-                                                                width: 16,
-                                                                height: 16,
-                                                            }}
+                                                        <VerifiedIcon
                                                             src={Verified}
                                                             alt="Verified Account"
                                                             aria-hidden="true"
                                                         />
                                                     )}
-                                                </div>
-                                                <div
-                                                    style={{
-                                                        fontSize: 14,
-                                                        opacity: 0.7,
-                                                        textAlign: "left",
-                                                        gap: 4,
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                    }}
-                                                >
+                                                </UserTop>
+
+                                                <UserSub>
                                                     <span>{r.name}</span>
                                                     <span>•</span>
                                                     <span>
                                                         {formatToShortNumber(r.followersCount)}{" "}
                                                         followers
                                                     </span>
-                                                </div>
-                                            </div>
-                                        </NavLink>
+                                                </UserSub>
+                                            </UserMeta>
+                                        </RecentLink>
 
-                                        <button
+                                        <RemoveButton
                                             onClick={() => removeRecent(r.id)}
-                                            style={{
-                                                border: "none",
-                                                background: "transparent",
-                                                color: "#aaa",
-                                                cursor: "pointer",
-                                                padding: "12px 24px",
-                                            }}
                                             aria-label="Remove"
                                         >
                                             ✕
-                                        </button>
-                                    </div>
+                                        </RemoveButton>
+                                    </RecentRow>
                                 ))}
-                            </div>
+                            </List>
                         )}
                     </>
                 )}
@@ -357,102 +234,60 @@ export default function SearchPanel({
                 {/* Query => Results */}
                 {!!debounced && (
                     <>
-                        {loading && (
-                            <div style={{ opacity: 0.7, padding: "12px 0" }}>Searching…</div>
-                        )}
-                        {!loading && err && (
-                            <div
-                                style={{
-                                    padding: 12,
-                                    borderRadius: 12,
-                                    background: "rgba(255,0,0,0.08)",
-                                }}
-                            >
-                                {err}
-                            </div>
-                        )}
-                        {!loading && !err && users.length === 0 && (
-                            <div style={{ opacity: 0.7, padding: "12px 0" }}>No results.</div>
-                        )}
+                        {loading && <Muted>Searching…</Muted>}
+
+                        {!loading && err && <ErrorBox>{err}</ErrorBox>}
+
+                        {!loading && !err && users.length === 0 && <Muted>No results.</Muted>}
 
                         {!loading && !err && users.length > 0 && (
-                            <div
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                }}
-                            >
+                            <List>
                                 {users.map((u) => (
-                                    <NavLink
+                                    <RowLink
                                         key={u.id}
                                         to={`/profile/${u.username}`}
                                         onClick={() => {
                                             addRecent(u);
                                             onClose();
                                         }}
-                                        className={styles.item}
                                     >
-                                        <div
-                                            className={`${styles["profile-container"]} ${
-                                                u.hasStory ? styles["has-story"] : ""
-                                            }`}
-                                        >
-                                            <img
-                                                src={u.avatarUrl}
-                                                alt=""
-                                                aria-hidden="true"
-                                                className={styles["profile-img"]}
-                                            />
-                                        </div>
+                                        <ProfileImage
+                                            user={u}
+                                            width={56}
+                                            height={56}
+                                            clickable={false}
+                                        />
 
-                                        <div style={{ display: "flex", flexDirection: "column" }}>
-                                            <div
-                                                style={{
-                                                    display: "flex",
-                                                    gap: 6,
-                                                    alignItems: "center",
-                                                }}
-                                            >
-                                                <span style={{ fontWeight: 900 }}>
-                                                    {u.username}
-                                                </span>
+                                        <UserMeta>
+                                            <UserTop>
+                                                <Username>{u.username}</Username>
                                                 {u.isVerified && (
-                                                    <img
-                                                        style={{
-                                                            width: 16,
-                                                            height: 16,
-                                                        }}
+                                                    <VerifiedIcon
                                                         src={Verified}
                                                         alt="Verified Account"
                                                         aria-hidden="true"
                                                     />
                                                 )}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    fontSize: 14,
-                                                    opacity: 0.7,
-                                                    textAlign: "left",
-                                                    gap: 4,
-                                                    display: "flex",
-                                                    alignItems: "center",
-                                                }}
-                                            >
+                                            </UserTop>
+
+                                            <UserSub>
                                                 <span>{u.name}</span>
                                                 <span>•</span>
                                                 <span>
                                                     {formatToShortNumber(u.followersCount)}{" "}
                                                     followers
                                                 </span>
-                                            </div>
-                                        </div>
-                                    </NavLink>
+                                            </UserSub>
+                                        </UserMeta>
+                                    </RowLink>
                                 ))}
-                            </div>
+                            </List>
                         )}
                     </>
                 )}
-            </div>
-        </div>
+            </Body>
+        </Panel>
     );
-}
+};
+
+export default SearchPanel;

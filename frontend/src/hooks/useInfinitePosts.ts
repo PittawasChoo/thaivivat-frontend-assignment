@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchPosts } from "apis/postsApi";
-
 import type { PostWithRelations } from "types/post";
 
 type UseInfinitePostsArgs = {
@@ -20,30 +18,32 @@ export function useInfinitePosts({ limit = 10, q = "" }: UseInfinitePostsArgs) {
     const abortRef = useRef<AbortController | null>(null);
     const inFlightRef = useRef(false);
 
-    const canLoadMore = useMemo(
-        () => hasMore && !isLoading && !inFlightRef.current,
-        [hasMore, isLoading]
-    );
+    const startRequest = () => {
+        // abort previous request
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+        return abortRef.current;
+    };
 
     const fetchPage = useCallback(
-        async (nextPage: number, modeForMerge: "replace" | "append") => {
+        async (nextPage: number, mode: "replace" | "append") => {
             if (inFlightRef.current) return;
             inFlightRef.current = true;
 
             setIsLoading(true);
             setError(null);
 
+            const ac = startRequest();
+
             try {
                 const res = await fetchPosts({
                     page: nextPage,
                     limit,
                     q,
-                    signal: abortRef.current?.signal,
+                    signal: ac.signal,
                 });
 
-                setPosts((prev) =>
-                    modeForMerge === "replace" ? res.data : [...prev, ...res.data]
-                );
+                setPosts((prev) => (mode === "replace" ? res.data : [...prev, ...res.data]));
                 setPage(res.page);
                 setHasMore(res.hasMore);
             } catch (e: any) {
@@ -58,28 +58,27 @@ export function useInfinitePosts({ limit = 10, q = "" }: UseInfinitePostsArgs) {
         [limit, q]
     );
 
-    const loadMore = useCallback(() => {
-        if (!canLoadMore) return;
-        const nextPage = page + 1;
-        void fetchPage(nextPage, "append");
-    }, [canLoadMore, fetchPage, page]);
-
     const reset = useCallback(() => {
-        abortRef.current?.abort();
-        abortRef.current = new AbortController();
-
         setPosts([]);
         setPage(0);
         setHasMore(true);
-
         void fetchPage(1, "replace");
     }, [fetchPage]);
 
-    // initial load + when q/limit changes
+    const loadMore = useCallback(() => {
+        if (inFlightRef.current) return;
+        if (isLoading) return;
+        if (!hasMore) return;
+
+        const nextPage = page + 1;
+        void fetchPage(nextPage, "append");
+    }, [fetchPage, hasMore, isLoading, page]);
+
+    // initial load + whenever q/limit changes
     useEffect(() => {
         reset();
         return () => abortRef.current?.abort();
     }, [reset]);
 
-    return { posts, isLoading, error, hasMore, loadMore, reset, page, setPosts };
+    return { posts, setPosts, page, hasMore, isLoading, error, loadMore, reset };
 }

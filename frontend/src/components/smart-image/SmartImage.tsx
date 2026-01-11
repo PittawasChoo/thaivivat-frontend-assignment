@@ -1,20 +1,35 @@
-import { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
-type Props = {
+const CLICK_DELAY = 350;
+
+type SmartImageProps = Omit<
+    React.ImgHTMLAttributes<HTMLImageElement>,
+    "onClick" | "onDoubleClick" | "src"
+> & {
     src: string;
-    alt?: string;
-    style?: React.CSSProperties;
     onClick?: () => void;
     onDoubleClick?: () => void;
 };
 
-const CLICK_DELAY = 350;
-
-export default function SmartImage({ src, alt = "", style, onClick, onDoubleClick }: Props) {
+const SmartImage = ({
+    src,
+    alt = "",
+    style,
+    className,
+    onClick,
+    onDoubleClick,
+    ...imgProps
+}: SmartImageProps) => {
     const retried = useRef(false);
+    const clickTimer = useRef<number | null>(null);
+
     const [currentSrc, setCurrentSrc] = useState(src);
 
-    const clickTimer = useRef<number | null>(null);
+    // keep in sync if parent changes src (important for carousels)
+    useEffect(() => {
+        retried.current = false;
+        setCurrentSrc(src);
+    }, [src]);
 
     const handleClick = () => {
         if (!onClick) return;
@@ -31,19 +46,28 @@ export default function SmartImage({ src, alt = "", style, onClick, onDoubleClic
     const handleDoubleClick = () => {
         // cancel single-click if pending
         if (clickTimer.current) {
-            clearTimeout(clickTimer.current);
+            window.clearTimeout(clickTimer.current);
             clickTimer.current = null;
         }
         onDoubleClick?.();
     };
 
+    // cleanup timer on unmount
+    useEffect(() => {
+        return () => {
+            if (clickTimer.current) window.clearTimeout(clickTimer.current);
+        };
+    }, []);
+
     return (
         <img
+            {...imgProps}
+            className={className}
             src={currentSrc}
             alt={alt}
             style={style}
-            loading="lazy"
-            decoding="async"
+            loading={imgProps.loading ?? "lazy"}
+            decoding={imgProps.decoding ?? "async"}
             onClick={handleClick}
             onDoubleClick={handleDoubleClick}
             onError={() => {
@@ -55,8 +79,10 @@ export default function SmartImage({ src, alt = "", style, onClick, onDoubleClic
                 }
 
                 // fallback placeholder
-                setCurrentSrc("/placeholder.png"); // put a placeholder in /public
+                setCurrentSrc("/placeholder.jpeg"); // put a placeholder in /public
             }}
         />
     );
-}
+};
+
+export default SmartImage;

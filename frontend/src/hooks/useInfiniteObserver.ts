@@ -1,39 +1,45 @@
 import { useEffect, useRef } from "react";
 
 type Options = {
-  enabled: boolean;
-  onIntersect: () => void;
-  root?: Element | null;
-  rootMargin?: string;
-  threshold?: number;
+    enabled: boolean;
+    onIntersect: () => void;
+    root?: Element | null;
+    rootMargin?: string;
+    threshold?: number;
 };
 
-const THRESHOLD = 0;
-
 export function useInfiniteObserver({
-  enabled,
-  onIntersect,
-  root = null,
-  rootMargin = "600px",
+    enabled,
+    onIntersect,
+    root = null,
+    rootMargin = "600px",
+    threshold = 0,
 }: Options) {
-  const ref = useRef<HTMLDivElement | null>(null);
+    const ref = useRef<HTMLDivElement | null>(null);
+    const onIntersectRef = useRef(onIntersect);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const el = ref.current;
-    if (!el) return;
+    // keep latest callback without re-creating observer
+    useEffect(() => {
+        onIntersectRef.current = onIntersect;
+    }, [onIntersect]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0];
-        if (first?.isIntersecting) onIntersect();
-      },
-      { root, rootMargin, threshold: THRESHOLD }
-    );
+    useEffect(() => {
+        if (!enabled) return;
 
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [enabled, onIntersect, root, rootMargin]);
+        const el = ref.current;
+        if (!el) return;
 
-  return ref;
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const first = entries[0];
+                if (first?.isIntersecting) onIntersectRef.current();
+            },
+            { root, rootMargin, threshold }
+        );
+
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [enabled, root, rootMargin, threshold]);
+
+    return ref;
 }
