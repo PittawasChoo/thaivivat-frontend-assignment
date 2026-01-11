@@ -7,5 +7,5 @@ export type User = {
     username: string;
     followersCount: number;
     followingsCount: number;
-    postCount: number;
+    postsCount: number;
 };

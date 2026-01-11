@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 import Heart from "assets/icons/heart-outline.png";
 import LeftArrow from "assets/icons/left-arrow.png";
@@ -7,13 +8,14 @@ import RedHeart from "assets/icons/heart-red.png";
 import RightArrow from "assets/icons/right-arrow.png";
 import User from "assets/icons/user.png";
 import Verified from "assets/icons/verified.png";
-
 import type { PostWithRelations } from "types/post";
+
+import ProfileHoverCard from "components/profile-hover-card/ProfileHoverCard";
+import SmartImage from "components/smart-image/SmartImage";
 
 import { formatPostTime } from "utils/time";
 import { formatToShortNumber } from "utils/number";
-
-import SmartImage from "../smart-image/SmartImage";
+import ProfileImage from "components/profile-image/ProfileImage";
 
 /* image size cache */
 const sizeCache = new Map<string, { w: number; h: number }>();
@@ -35,6 +37,8 @@ export default function PostBox(props: {
     post: PostWithRelations;
     onToggleLike: (postId: number) => void;
 }) {
+    const navigate = useNavigate();
+
     const { post, onToggleLike } = props;
     const urls = post.imageUrls ?? [];
 
@@ -86,7 +90,7 @@ export default function PostBox(props: {
 
         if (!prev && post.liked) {
             setLikePulse(true);
-            const t = window.setTimeout(() => setLikePulse(false), 3000);
+            const t = window.setTimeout(() => setLikePulse(false), 1000);
             return () => window.clearTimeout(t);
         }
     }, [post.liked]);
@@ -102,22 +106,19 @@ export default function PostBox(props: {
                     gap: 12,
                 }}
             >
-                <div
-                    style={{
-                        ...styles.profileImgContainer,
-                        ...(post.user.hasStory ? styles.hasStory : {}),
-                    }}
-                >
-                    <img
-                        style={styles.profileImg}
-                        src={post.user.avatarUrl}
-                        alt=""
-                        aria-hidden="true"
-                    />
-                </div>
+                <ProfileHoverCard user={post.user}>
+                    <ProfileImage user={post.user} width={50} height={50} />
+                </ProfileHoverCard>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "start" }}>
                     <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
-                        <span style={styles.user}>{post.user.username}</span>
+                        <ProfileHoverCard user={post.user}>
+                            <span
+                                style={styles.user}
+                                onClick={() => navigate(`/profile/${post.user.username}`)}
+                            >
+                                {post.user.username}
+                            </span>
+                        </ProfileHoverCard>
                         {post.user.isVerified && (
                             <img
                                 style={styles.verified}
@@ -360,7 +361,14 @@ export default function PostBox(props: {
             </div>
 
             <div style={styles.captionContainer}>
-                <div style={styles.user}>{post.user.username}</div>
+                <ProfileHoverCard user={post.user}>
+                    <div
+                        style={styles.user}
+                        onClick={() => navigate(`/profile/${post.user.username}`)}
+                    >
+                        {post.user.username}
+                    </div>
+                </ProfileHoverCard>
                 {post.user.isVerified && (
                     <img
                         style={styles.verified}
@@ -379,8 +387,8 @@ const styles: Record<string, React.CSSProperties> = {
     card: { background: "#0c1013" },
 
     profileImgContainer: {
-        width: 56,
-        height: 56,
+        width: 50,
+        height: 50,
         borderRadius: "50%",
         overflow: "hidden",
         flexShrink: 0,
@@ -396,10 +404,10 @@ const styles: Record<string, React.CSSProperties> = {
         width: 44,
         height: 44,
         borderRadius: "50%",
-        border: "4px solid #0c1013",
+        border: "4px solid #121b21",
         objectFit: "cover",
     },
-    user: { fontSize: 16, fontWeight: 800 },
+    user: { fontSize: 16, fontWeight: 800, cursor: "pointer" },
     verified: {
         width: 16,
         height: 16,

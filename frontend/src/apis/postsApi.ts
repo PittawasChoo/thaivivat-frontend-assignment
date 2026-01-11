@@ -46,3 +46,9 @@ export async function unlikePost(postId: string | number, signal?: AbortSignal) 
     if (!res.ok) throw new Error("Unlike failed");
     return res.json() as Promise<{ postId: number; liked: boolean; likesCount: number }>;
 }
+
+export async function getPostsByUserUsername(username: string, signal?: AbortSignal) {
+    const res = await fetch(`/api/user-posts/${encodeURIComponent(username)}`, { signal });
+    if (!res.ok) throw new Error("Failed to load posts");
+    return res.json();
+}

@@ -1,5 +1,5 @@
 import type { Location } from "./location";
-import type { User } from "./users";
+import type { User } from "./user";
 
 export type Post = {
     allTags: string[][];

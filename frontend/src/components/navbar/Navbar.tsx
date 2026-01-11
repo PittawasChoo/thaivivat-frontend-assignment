@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 import ActiveHomeIcon from "assets/icons/home-active.png";
 import ActiveSearchIcon from "assets/icons/search-active.png";
@@ -44,7 +44,7 @@ export default function Navbar() {
                     }}
                 >
                     <img className={styles.brandIcon} src={IgIcon} alt="Instagram" />
-                    {isWide && <span className={styles.brandText}>Instagram</span>}
+                    {isWide && <span className={styles.brandText}>Amstagrin</span>}
                 </NavLink>
 
                 <div className={styles.items}>

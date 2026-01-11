@@ -20,7 +20,7 @@ export default function Home() {
     const sentinelRef = useInfiniteObserver({
         enabled: hasMore, // stop observing when no more
         onIntersect,
-        rootMargin: "600px",
+        rootMargin: "1000px",
     });
 
     const inflightRef = useRef(new Map<string, AbortController>());
@@ -85,7 +85,7 @@ export default function Home() {
 
     return (
         <div>
-            <h2 style={{ marginBottom: 12 }}>Home</h2>
+            <h2 style={{ marginBottom: 12 }}>Amstagrin</h2>
 
             <main
                 style={{
