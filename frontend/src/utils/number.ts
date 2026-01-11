@@ -17,7 +17,7 @@ export function formatToShortNumber(count: number, locale = "en-US"): string {
 
     // 10000 – 999999 => xxk / xxxk
     if (count < 1000000) {
-        return `${Math.floor(count / 1000)}k`;
+        return `${Math.floor(count / 1000)}K`;
     }
 
     // 1000000 – 9999999 => xM / x.xM

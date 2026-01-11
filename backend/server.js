@@ -30,7 +30,12 @@ app.get("/api/posts", async (req, res) => {
     const users = db.data.users;
     const locations = db.data.locations;
 
-    const userById = new Map(users.map((u) => [u.id, u]));
+    const enhancedUsers = users.map((u) => ({
+        ...u,
+        postCount: db.data.posts.filter((p) => p.userId === u.id).length,
+    }));
+
+    const userById = new Map(enhancedUsers.map((u) => [u.id, u]));
     const locById = new Map(locations.map((l) => [l.id, l]));
 
     // sort newest first
@@ -48,7 +53,6 @@ app.get("/api/posts", async (req, res) => {
     const start = (page - 1) * limit;
     const paged = posts.slice(start, start + limit);
 
-    // ✅ enrich
     const enriched = paged.map((p) => ({
         ...p,
         user: userById.get(p.userId) ?? null,
@@ -112,6 +116,59 @@ app.patch("/api/posts/:id/unlike", async (req, res) => {
         likesCount: post.likesCount,
         liked: post.liked,
     });
+});
+
+app.get("/api/search/accounts", async (req, res) => {
+    const qRaw = String(req.query.q ?? "").trim();
+    const q = qRaw.toLowerCase();
+    if (!q) return res.json([]);
+
+    await db.read();
+    const users = db.data.users ?? [];
+
+    const scored = users
+        .map((u) => {
+            const username = String(u.username ?? "").toLowerCase();
+            const name = String(u.name ?? "").toLowerCase();
+
+            // no match => skip later
+            const usernameStarts = username.startsWith(q);
+            const usernameIncludes = username.includes(q);
+            const nameStarts = name.startsWith(q);
+            const nameIncludes = name.includes(q);
+
+            if (!(usernameIncludes || nameIncludes)) return null;
+
+            // scoring: startsWith > includes, username > name
+            let score = 0;
+            if (usernameStarts) score += 100;
+            else if (usernameIncludes) score += 60;
+
+            if (nameStarts) score += 40;
+            else if (nameIncludes) score += 20;
+
+            // tie-break: shorter username a bit higher (optional)
+            score += Math.max(0, 20 - username.length * 0.1);
+
+            return { u, score };
+        })
+        .filter(Boolean);
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const top5 = scored.slice(0, 5).map(({ u }) => ({
+        id: u.id,
+        username: u.username,
+        name: u.name,
+        avatarUrl: u.avatarUrl,
+        isVerified: !!u.isVerified,
+        hasStory: !!u.hasStory,
+        followersCount: u.followersCount ?? 0,
+        followingsCount: u.followingsCount ?? 0,
+        postCount: db.data.posts.filter((p) => p.userId === u.id).length,
+    }));
+
+    res.json(top5);
 });
 
 const PORT = process.env.PORT || 4000;

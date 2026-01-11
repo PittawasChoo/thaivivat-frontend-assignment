@@ -1,7 +1,5 @@
-export type Location = {
-    id: number;
-    name: string;
-};
+import type { Location } from "./location";
+import type { User } from "./users";
 
 export type Post = {
     allTags: string[][];
@@ -26,13 +24,4 @@ export type PostsResponse = {
 export type PostWithRelations = Post & {
     location: Location | null;
     user: User;
-};
-
-export type User = {
-    avatarUrl: string;
-    hasStory: boolean;
-    id: number;
-    isVerified: boolean;
-    name: string;
-    username: string;
 };
